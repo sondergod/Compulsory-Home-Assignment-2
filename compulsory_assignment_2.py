@@ -258,7 +258,7 @@ class Client:
         self.booked_venue = None                # stores the venue this client successfully booked
 
     def choose_venue(self, venues, roadmap):
-        """Choose a random venue that matches the client's budget and/or preferred type."""
+        ## Choose a random venue that matches the client's budget and/or preferred type.
         matching = [
             venue for venue in venues
             if roadmap.get(venue.__class__.__name__, None) == self.budget
@@ -277,30 +277,32 @@ class Client:
     def book_venue(self, venues, roadmap):
         venue = self.choose_venue(venues, roadmap)
         if not venue:
-            return
+            return f"{self.name} could not find a suitable venue."
 
         success = venue.book(self.rooms_needed)
 
         if success:
             self.booked_venue = venue
-            print(f"{self.name} booked {self.rooms_needed} room(s) at "
-                f"{venue.__class__.__name__} ({venue.location}) – {venue._number_of_rooms} left")
+            result = (f"{self.name} booked {self.rooms_needed} room(s) at "
+                    f"{venue.__class__.__name__} ({venue.location}) – {venue._number_of_rooms} left")
 
             # Detailed venue info depending on type
             if isinstance(venue, ShortTermRental):
-                print(f"  → View: {venue.view}, Pool: {venue.pool}, Garden: {venue.garden}")
+                result += f"\n  → View: {venue.view}, Pool: {venue.pool}, Garden: {venue.garden}"
             elif isinstance(venue, Hostel):
-                print(f"  → Hot water: {venue.hot_water}, Wi-Fi: {venue.wifi}")
+                result += f"\n  → Hot water: {venue.hot_water}, Wi-Fi: {venue.wifi}"
             elif isinstance(venue, Hotel):
-                print(f"  → Brand: {venue.brand}, Stars: {venue.stars}, Amenities: {venue.amenities_tier}")
+                result += f"\n  → Brand: {venue.brand}, Stars: {venue.stars}, Amenities: {venue.amenities_tier}"
 
-            # Fallback message if fully booked after this reservation
             if venue._number_of_rooms == 0:
-                print(f"  → No more rooms available at {venue.__class__.__name__} in {venue.location}.")
+                result += f"\n  → No more rooms available at {venue.__class__.__name__} in {venue.location}."
 
         else:
-            print(f"{self.name} could not book {self.rooms_needed} room(s) at "
-                f"{venue.__class__.__name__} ({venue.location}) – no availability")
+            result = (f"{self.name} could not book {self.rooms_needed} room(s) at "
+                    f"{venue.__class__.__name__} ({venue.location}) – no availability")
+
+        return result
+
 
 
 #####################--------------------------------------CREATING CLIENTS, VENUES AND INTERACTIONS--------------------------------------#####################
@@ -379,8 +381,18 @@ print(f"\n[Info] All {len(clients)} clients have been created successfully.")
 # --- Booking phase ---
 print("\n[Process] Booking phase started...\n")
 
+booking_logs = []
+
 for client in clients:
-    client.book_venue(v, roadmap)
+    message = client.book_venue(v, roadmap)
+    if message:
+        booking_logs.append(message)
+
+# Print only the first 10 bookings
+for log in booking_logs[:10]:
+    print(log)
+
+print(f"\n[Info] Showing only 10 of {len(booking_logs)} bookings.")
 
 # --- Booking summary ---
 print("\n[Summary] Booking results:")
