@@ -1,7 +1,3 @@
-# Annotated review of the original file.
-# Each erroneous line is commented with "ERROR:" and followed by a corrected line.
-# (Source: "erroneous code.py")
-
 import random as rd
 # from abc import ABC   # ERROR: abstractmethod is used but not imported. Also ABC is never used as a base.
 from abc import ABC, abstractmethod  # FIX: import abstractmethod too; will use ABC properly.
