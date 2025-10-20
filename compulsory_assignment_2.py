@@ -76,15 +76,23 @@ class Hotel(HolidayVenue):
         self.location = get_location()
         self.brand = rd.choice(['Hilton','Marriott','Hyatt','Intercontinental','Accor','Wyndham','Choice','Best Western','Radisson','Meliá'])
         self.type = rd.choice(['Resort','Business','Boutique'])
-        self.stars = rd.randint(1, 5) # self.stars = rd.randint(0, 5)  # ERROR: hotel star ratings should be 1..5.
+        self.stars = rating
         self.pos = rd.randint(0, len(self.rooms) - 1)
-        self._number_of_rooms = self.rooms[self.pos]
+        self._max_rooms = self.rooms[self.pos]
+        self._number_of_rooms = self._max_rooms
         self.amenities = self.choosing_amenities()
         self.amenities_package()
     
     def book(self, rooms=1):
         if self._number_of_rooms >= rooms:
             self._number_of_rooms -= rooms
+
+            occupancy_level = self._number_of_rooms / self._max_rooms
+            if occupancy_level <= 0.2:
+                print(f"\n[Renovation Trigger] {self.brand} in {self.location} fell below 20% capacity "
+                      f"({self._number_of_rooms}/{self._max_rooms} rooms left) — initiating renovation!")
+                self.renovate_hotel()
+
             return True
         return False
   
@@ -95,14 +103,16 @@ class Hotel(HolidayVenue):
     def number_of_rooms(self):
         return self._number_of_rooms
 
-    def renovate_hotel(self, rooms=rooms):
-        if self.pos < len(rooms) - 1:
+    def renovate_hotel(self):
+        if self.pos < len(self.rooms) - 1:
             self.pos += 1
-            self.rooms_available = rooms[self.pos]
+            self._max_rooms = self.rooms[self.pos]
+            self._number_of_rooms = self._max_rooms
             # self.stars += 1  # Optional: could increase up to 5; not necessarily tied to rooms.
             self.stars = min(5, self.stars + 1)
+            print(f"→ Renovation complete: {self.brand} now has {self._number_of_rooms} rooms and {self.stars} stars.\n")
         else:
-            print("This hotel already has the maximum number of rooms.")
+            print(f"→ {self.brand} already has the maximum number of rooms.\n")
 
     def choosing_amenities(self):
         # if self.stars == 1:
@@ -245,11 +255,9 @@ class SocialHostel(Hostel):
         self.quiet_hours_start = rd.choice(["22:00", "23:00", "00:00"])
         self.common_area_size = rd.choice(["small", "medium", "large"])
 
-budget_options=['low','medium','high']
-client_preferences = ['short_term_rental','capsule_hostel','social_hostel','resort_hotel','business_hotel','boutique_hotel']
-roadmap={'short_term_rental':'medium','capsule_hostel':'low','social_hostel':'medium','resort_hotel':'high','business_hotel':'medium','boutique_hotel':'high'}
-
 class Client:
+    no_match_count = 0
+
     def __init__(self, name, budget, preferred_type=None, rooms_needed=None):
         self.name = name
         self.budget = budget                    # 'low', 'medium', or 'high'
@@ -268,8 +276,10 @@ class Client:
             matching = [v for v in matching if v.__class__.__name__ == self.preferred_type]
 
         if not matching:
-            print(f"{self.name} found no venues matching budget '{self.budget}'.")
-            return None
+                if Client.no_match_count < 10:
+                    print(f"{self.name} found no venues matching budget '{self.budget}'.")
+                Client.no_match_count += 1
+                return None
 
         return rd.choice(matching)
     
@@ -319,14 +329,122 @@ class Client:
         return result
 
 
+class Simulation:
+    def __init__(self, num_venues=None, num_clients=None):
+        self.num_venues = num_venues or rd.randint(10, 11)
+        self.num_clients = num_clients or rd.randint(300, 500)
+        self.venues = []
+        self.clients = []
+        self.venue_counts = {}
+        self.client_counts = {}
+
+    def create_venues(self):
+        print(f"\n[Setup] Creating {self.num_venues} venues...")
+        for i in range(self.num_venues):
+            vid = i + 1
+            rating = rd.randint(1, 5)
+            x_type = rd.choice([
+                'ShortTermRental', 'CapsuleHostel', 'SocialHostel',
+                'ResortHotel', 'BusinessHotel', 'BoutiqueHotel'
+            ])
+            venue_class = globals()[x_type]
+            venue = venue_class(vid, rating)
+            self.venues.append(venue)
+            self.venue_counts[x_type] = self.venue_counts.get(x_type, 0) + 1
+
+        print("\n[Summary] Venue creation complete:")
+        for vtype, count in self.venue_counts.items():
+            print(f"  {vtype}: {count}")
+
+    def optional_customize(self):
+        choice = input("\n[Input] Customize number of rooms for ShortTermRentals? (yes/no): ").strip().lower()
+        if choice == "yes":
+            for venue in self.venues:
+                if isinstance(venue, ShortTermRental):
+                    venue.input_number_of_rooms()
+        print("\n[Info] Customization complete. All venues finalized.")
+
+    def create_clients(self):
+        print(f"\n[Setup] Creating {self.num_clients} clients...")
+        for i in range(self.num_clients):
+            name = f"Client_{i+1}"
+            budget = rd.choice(budget_options)
+            valid_types = [t for t, b in roadmap.items() if b == budget]
+            preferred_type = rd.choice(valid_types)
+            rooms_needed = rd.randint(1, 3)
+            client = Client(name, budget, preferred_type, rooms_needed)
+            self.clients.append(client)
+            self.client_counts[budget] = self.client_counts.get(budget, 0) + 1
+
+        print("\n[Summary] Client creation complete:")
+        for budget, count in self.client_counts.items():
+            print(f"  {budget.capitalize()}-budget clients: {count}")
+        print(f"\n[Info] All {len(self.clients)} clients have been created successfully.")
+
+    def run_bookings(self):
+        print("\n[Process] Booking phase started...\n")
+        logs = [client.book_venue(self.venues, roadmap) for client in self.clients]
+        logs = [log for log in logs if log] 
+        for log in logs[:10]:
+            print(log)
+        print(f"\n[Info] Showing only 10 of {len(logs)} bookings.\n")
+        return logs
+    
+    def summary(self):
+        print("\n[Summary] Booking results:")
+        for client in self.clients[:10]:
+            if client.booked_venue:
+                v = client.booked_venue
+                print(f"  {client.name} booked {v.__class__.__name__} in {v.location}.")
+            else:
+                print(f"  {client.name} did not manage to book any venue.")
+        if len(self.clients) > 10:
+            print(f"  ... (skipping {len(self.clients) - 10} more clients)")
+        total = sum(1 for c in self.clients if c.booked_venue)
+        print(f"\n[Stats] Successful bookings: {total}/{len(self.clients)} clients.")
+
+        print("\n[Summary] Remaining availability (first 10 venues):")
+        for venue in self.venues[:10]:
+            print(f"  {venue.__class__.__name__} in {venue.location}: {venue._number_of_rooms} rooms left")
+        print("\n[End] Simulation complete.\n")
+
+
+    
 
 #####################--------------------------------------CREATING CLIENTS, VENUES AND INTERACTIONS--------------------------------------#####################
+budget_options=['low', 'medium', 'high']
+client_preferences = [
+    'ShortTermRental',
+    'CapsuleHostel',
+    'SocialHostel',
+    'ResortHotel',
+    'BusinessHotel',
+    'BoutiqueHotel'
+]
+roadmap = {
+    'ShortTermRental': 'medium',
+    'CapsuleHostel': 'low',
+    'SocialHostel': 'medium',
+    'ResortHotel': 'high',
+    'BusinessHotel': 'medium',
+    'BoutiqueHotel': 'high'
+}
 
+sim = Simulation()
+sim.create_venues()
+sim.optional_customize()
+sim.create_clients()
+sim.run_bookings()
+sim.summary()
+
+
+
+""" OLD SETUP
 # --- Venue creation phase ---
 v = []
 venue_counts = {}
 
-number_of_venues = rd.randint(10, 100)
+number_of_venues = rd.randint(10,11)
 print(f"\n[Setup] Creating {number_of_venues} venues...")
 
 for i in range(number_of_venues):
@@ -363,18 +481,8 @@ print("\n[Info] Customization complete. All venues finalized.")
 clients = []
 client_counts = {}
 
-number_of_clients = rd.randint(50,75)
+number_of_clients = rd.randint(50,125)
 print(f"\n[Setup] Creating {number_of_clients} clients...")
-
-budgets = ['low', 'medium', 'high']
-roadmap = {
-    'ShortTermRental': 'medium',
-    'CapsuleHostel': 'low',
-    'SocialHostel': 'medium',
-    'ResortHotel': 'high',
-    'BusinessHotel': 'medium',
-    'BoutiqueHotel': 'high'
-}
 
 for i in range(number_of_clients):
     name = f"Client_{i+1}"
@@ -404,7 +512,7 @@ for client in clients:
         booking_logs.append(message)
 
 # Print only the first 10 bookings
-for log in booking_logs[:10]:
+for log in booking_logs[:50]:
     print(log)
 
 print(f"\n[Info] Showing only 10 of {len(booking_logs)} bookings.\n")
@@ -433,3 +541,4 @@ for venue in v[:10]:
 print("\n[End] Simulation complete.\n")
 
 
+"""
