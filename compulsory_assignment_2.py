@@ -77,7 +77,8 @@ class Hotel(HolidayVenue):
         self.brand = rd.choice(['Hilton','Marriott','Hyatt','Intercontinental','Accor','Wyndham','Choice','Best Western','Radisson','Meliá'])
         self.type = rd.choice(['Resort','Business','Boutique'])
         self.stars = rd.randint(1, 5) # self.stars = rd.randint(0, 5)  # ERROR: hotel star ratings should be 1..5.
-        self.pos, self._number_of_rooms = self.number_of_rooms()
+        self.pos = rd.randint(0, len(self.rooms) - 1)
+        self._number_of_rooms = self.rooms[self.pos]
         self.amenities = self.choosing_amenities()
         self.amenities_package()
     
@@ -91,9 +92,8 @@ class Hotel(HolidayVenue):
     # def number_of_rooms(self, rooms=rooms):
     #     pos = rooms.index(rd.choice(rooms))
     #     return pos                         # ERROR: returns only index, not rooms count.
-    def number_of_rooms(self, rooms=rooms):
-        pos = rooms.index(rd.choice(rooms))
-        return pos, rooms[pos]
+    def number_of_rooms(self):
+        return self._number_of_rooms
 
     def renovate_hotel(self, rooms=rooms):
         if self.pos < len(rooms) - 1:
@@ -284,17 +284,32 @@ class Client:
         if success:
             self.booked_venue = venue
             result = (f"{self.name} booked {self.rooms_needed} room(s) at "
-                    f"{venue.__class__.__name__} ({venue.location}) – {venue._number_of_rooms} left")
+                    f"{venue.__class__.__name__} ({venue.location}) – {venue.number_of_rooms()} left")
 
             # Detailed venue info depending on type
             if isinstance(venue, ShortTermRental):
                 result += f"\n  → View: {venue.view}, Pool: {venue.pool}, Garden: {venue.garden}"
+
+            elif isinstance(venue, CapsuleHostel):
+                result += (
+                    f"\n  → Capsules: {venue.capsule_count}, Privacy: {venue.pod_privacy_level}, "
+                    f"Kiosk check-in: {venue.kiosk_checkin}, Lockers: {venue.lockers}"
+                )
+
+            elif isinstance(venue, SocialHostel):
+                events = ', '.join(venue.event_nights) if venue.event_nights else 'None'
+                result += (
+                    f"\n  → Bar on site: {venue.bar_on_site}, Events: {events}, "
+                    f"Quiet hours: {venue.quiet_hours_start}, Common area: {venue.common_area_size}"
+                )
+
             elif isinstance(venue, Hostel):
                 result += f"\n  → Hot water: {venue.hot_water}, Wi-Fi: {venue.wifi}"
+
             elif isinstance(venue, Hotel):
                 result += f"\n  → Brand: {venue.brand}, Stars: {venue.stars}, Amenities: {venue.amenities_tier}"
 
-            if venue._number_of_rooms == 0:
+            if venue.number_of_rooms() == 0:
                 result += f"\n  → No more rooms available at {venue.__class__.__name__} in {venue.location}."
 
         else:
@@ -348,7 +363,7 @@ print("\n[Info] Customization complete. All venues finalized.")
 clients = []
 client_counts = {}
 
-number_of_clients = rd.randint(100, 200)
+number_of_clients = rd.randint(50,75)
 print(f"\n[Setup] Creating {number_of_clients} clients...")
 
 budgets = ['low', 'medium', 'high']
@@ -392,7 +407,7 @@ for client in clients:
 for log in booking_logs[:10]:
     print(log)
 
-print(f"\n[Info] Showing only 10 of {len(booking_logs)} bookings.")
+print(f"\n[Info] Showing only 10 of {len(booking_logs)} bookings.\n")
 
 # --- Booking summary ---
 print("\n[Summary] Booking results:")
@@ -416,3 +431,5 @@ for venue in v[:10]:
     print(f"  {venue.__class__.__name__} in {venue.location}: {venue._number_of_rooms} rooms left")
 
 print("\n[End] Simulation complete.\n")
+
+
