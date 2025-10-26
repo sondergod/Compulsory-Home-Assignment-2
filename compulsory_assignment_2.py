@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod  # FIX: import abstractmethod too; will use 
 
 
 def get_location():
+    """Returns a random European capital."""
     eu_capitals = ["Amsterdam","Athens","Berlin","Bratislava","Brussels","Bucharest","Budapest","Copenhagen","Dublin","Helsinki",
                    "Lisbon","Ljubljana","Luxembourg","Madrid","Nicosia","Paris","Prague","Riga","Rome","Sofia",
                    "Stockholm","Tallinn","Valletta","Vienna","Vilnius","Warsaw","Zagreb"]
@@ -21,20 +22,22 @@ def get_location():
 #     def number_of_rooms(self):
 # ERROR: Inheritance is inverted. A general "holiday venue" should be the abstract base; Hotel should inherit it.
 class HolidayVenue(ABC):
+    """Abstract base class representing a generic holiday venue."""
     def __init__(self, id, rating):
         self.id = id
         self.rating = rating
         self.location = get_location()
 
-    @abstractmethod
-    def number_of_rooms(self):
+    @abstractmethod ## Abstract method to be implemented by subclasses.
+    def number_of_rooms(self): 
         ...
     
-    @abstractmethod
+    @abstractmethod ## Abstract method for booking logic."""
     def book(self, rooms):
         ...
 
     def amenities_package(self):
+        """Assign amenities tier based on rating."""
         if self.rating <= 2:
             self.amenities_tier = 'Basic'
         elif self.rating == 3:
@@ -45,6 +48,7 @@ class HolidayVenue(ABC):
             self.amenities_tier = 'Luxury'
 
     def upgrade_venue(self):
+        """Increase rating and reassign amenities if possible."""
         if self.rating < 5:
             self.rating += 1
             self.amenities_package()
@@ -52,6 +56,7 @@ class HolidayVenue(ABC):
             print("This venue already has the highest rating.")
 
     def venue_downgrade(self):
+        """Decrease rating (but not below 1) and reassign amenities."""
         self.rating = max(1, self.rating - 1)
         self.amenities_package()
 
@@ -61,6 +66,7 @@ class HolidayVenue(ABC):
 # class hotel():  # ERROR: class name should be Capitalized by convention; also will be subclass of an abstract base.
 #     rooms = [50, 75, 100, 120, 200, 300, 350]
 class Hotel(HolidayVenue):
+    """Represents a hotel type venue."""
     rooms = [50, 75, 100, 120, 200, 300, 350]
 
     # def __init__(self, id, rating):
@@ -84,6 +90,7 @@ class Hotel(HolidayVenue):
         self.amenities_package()
     
     def book(self, rooms=1):
+        """Book a number of rooms and trigger renovation if occupancy is low."""
         if self._number_of_rooms >= rooms:
             self._number_of_rooms -= rooms
 
@@ -101,9 +108,11 @@ class Hotel(HolidayVenue):
     #     pos = rooms.index(rd.choice(rooms))
     #     return pos                         # ERROR: returns only index, not rooms count.
     def number_of_rooms(self):
+        """Return current available room count."""
         return self._number_of_rooms
 
     def renovate_hotel(self):
+        """Upgrade hotel size and stars."""
         if self.pos < len(self.rooms) - 1:
             self.pos += 1
             self._max_rooms = self.rooms[self.pos]
@@ -115,6 +124,7 @@ class Hotel(HolidayVenue):
             print(f"→ {self.brand} already has the maximum number of rooms.\n")
 
     def choosing_amenities(self):
+        """Return list of amenities based on star rating."""
         # if self.stars == 1:
         #     amenities = ['Breakfast', 'Free wifi', 'Bar', 'Gym']
         # elif self.stars == 2:
@@ -145,8 +155,9 @@ class Hotel(HolidayVenue):
 #         self.beach_access = rd.choice(['True', 'False'])  # ERROR: strings instead of booleans
 #         ...                                               # ERROR: no super().__init__ call.
 class ResortHotel(Hotel):
+    """Hotel subclass with resort-specific attributes."""
     def __init__(self, id, rating):
-        super().__init__(id, rating)
+        super().__init__(id, rating) 
         self.beach_access = rd.choice([True, False])
         self.pool_size = rd.choice(['Small','Medium','Large'])
         self.spa = rd.choice([True, False])
@@ -154,6 +165,7 @@ class ResortHotel(Hotel):
 
 
 class BusinessHotel(Hotel):
+    """Hotel subclass specialized for business clients."""
     def __init__(self, id, rating):
         super().__init__(id, rating)
         self.conference_rooms = rd.randint(1, 5)
@@ -168,6 +180,7 @@ class BusinessHotel(Hotel):
 #         self.unique_design = np.choice([True, False])  # ERROR: uses numpy not imported; should use random.
 #         ...
 class BoutiqueHotel(Hotel):
+    """Hotel subclass emphasizing design and personalization."""
     def __init__(self, id, rating):
         super().__init__(id, rating)
         self.unique_design = rd.choice([True, False])
@@ -183,6 +196,7 @@ class BoutiqueHotel(Hotel):
 #         ...
 #         self.view = rd.choice(self.view)   # ERROR: attribute name is "views".
 class ShortTermRental(HolidayVenue):
+    """Short-term rental (Airbnb-like) venue."""
     views = ['seaside', 'town', 'garden view', 'no view']
 
     def __init__(self, id, rating, preset_rooms=None):
@@ -193,6 +207,7 @@ class ShortTermRental(HolidayVenue):
         self.view = rd.choice(self.views)
 
     def input_number_of_rooms(self, value=None):
+        """Prompt user for number of rooms (validated)."""
         while True:
             try:
                 number = int(input("Enter number of rooms for short-term rental (1–5): "))
@@ -220,6 +235,7 @@ class ShortTermRental(HolidayVenue):
 #         if not (1 <= self._number_of_rooms <= 25):
 #             raise ValueError("Hostel number_of_rooms must be between 1 and 30.")  # ERROR: mismatch (25 vs 30)
 class Hostel(HolidayVenue):
+    """Budget accommodation type with shared rooms."""
     def __init__(self, id, rating, number_of_rooms=None):
         super().__init__(id, rating)
         self._number_of_rooms = rd.randint(1, 30) if number_of_rooms is None else number_of_rooms
@@ -239,6 +255,7 @@ class Hostel(HolidayVenue):
 
 
 class CapsuleHostel(Hostel):
+    """Modern hostel type with capsule pods."""
     def __init__(self, id, rating, number_of_rooms=None):
         super().__init__(id, rating, number_of_rooms)
         self.capsule_count = rd.randint(20, 120)
@@ -248,12 +265,16 @@ class CapsuleHostel(Hostel):
 
 
 class SocialHostel(Hostel):
+    """Hostel subtype emphasizing social atmosphere."""
     def __init__(self, id, rating, number_of_rooms=None):
         super().__init__(id, rating, number_of_rooms)
         self.bar_on_site = rd.choice([True, False])
         self.event_nights = rd.choice([["jazz night"], ["salsa"], ["karaoke"], ["board game night"], []])
         self.quiet_hours_start = rd.choice(["22:00", "23:00", "00:00"])
         self.common_area_size = rd.choice(["small", "medium", "large"])
+
+# -------------------------- Client and Simulation Logic --------------------------
+# Classes Client and Simulation were added for complete simulation and to test interactions.
 
 class Client:
     no_match_count = 0
@@ -266,7 +287,7 @@ class Client:
         self.booked_venue = None                # stores the venue this client successfully booked
 
     def choose_venue(self, venues, roadmap):
-        ## Choose a random venue that matches the client's budget and/or preferred type.
+        """Filter and choose a venue matching the client's budget and type."""
         matching = [
             venue for venue in venues
             if roadmap.get(venue.__class__.__name__, None) == self.budget
@@ -285,6 +306,7 @@ class Client:
     
 
     def book_venue(self, venues, roadmap):
+        """Attempt to book a chosen venue and print details."""
         venue = self.choose_venue(venues, roadmap)
         if not venue:
             return f"{self.name} could not find a suitable venue."
@@ -330,6 +352,7 @@ class Client:
 
 
 class Simulation:
+    """Handles generation of venues, clients, and bookings."""
     def __init__(self, num_venues=None, num_clients=None):
         self.num_venues = num_venues or rd.randint(10, 11)
         self.num_clients = num_clients or rd.randint(300, 500)
@@ -357,6 +380,7 @@ class Simulation:
             print(f"  {vtype}: {count}")
 
     def optional_customize(self):
+        """Allow user input for customizing ShortTermRental room counts."""
         choice = input("\n[Input] Customize number of rooms for ShortTermRentals? (yes/no): ").strip().lower()
         if choice == "yes":
             for venue in self.venues:
@@ -391,6 +415,7 @@ class Simulation:
         return logs
     
     def summary(self):
+        """Prints summary statistics."""
         print("\n[Summary] Booking results:")
         for client in self.clients[:10]:
             if client.booked_venue:
@@ -411,7 +436,7 @@ class Simulation:
 
     
 
-#####################--------------------------------------CREATING CLIENTS, VENUES AND INTERACTIONS--------------------------------------#####################
+# -------------------------- Simulation Execution --------------------------
 budget_options=['low', 'medium', 'high']
 client_preferences = [
     'ShortTermRental',
@@ -436,109 +461,3 @@ sim.optional_customize()
 sim.create_clients()
 sim.run_bookings()
 sim.summary()
-
-
-
-""" OLD SETUP
-# --- Venue creation phase ---
-v = []
-venue_counts = {}
-
-number_of_venues = rd.randint(10,11)
-print(f"\n[Setup] Creating {number_of_venues} venues...")
-
-for i in range(number_of_venues):
-    id = i + 1
-    rating = rd.randint(1, 5)
-    x_type = rd.choice([
-        'ShortTermRental',
-        'CapsuleHostel',
-        'SocialHostel',
-        'ResortHotel',
-        'BusinessHotel',
-        'BoutiqueHotel'
-    ])
-
-    # Instantiate the correct venue type
-    venue_class = globals()[x_type]
-    v.append(venue_class(id, rating))
-    venue_counts[x_type] = venue_counts.get(x_type, 0) + 1
-
-# Summary of venues created
-print("\n[Summary] Venue creation complete:")
-for venue_type, count in venue_counts.items():
-    print(f"  {venue_type}: {count}")
-
-# Optional customization
-choice = input("\n[Input] Customize number of rooms for ShortTermRentals? (yes/no): ").strip().lower()
-if choice == "yes":
-    for venue in v:
-        if isinstance(venue, ShortTermRental):
-            venue.input_number_of_rooms()
-print("\n[Info] Customization complete. All venues finalized.")
-
-# --- Client creation phase ---
-clients = []
-client_counts = {}
-
-number_of_clients = rd.randint(50,125)
-print(f"\n[Setup] Creating {number_of_clients} clients...")
-
-for i in range(number_of_clients):
-    name = f"Client_{i+1}"
-    budget = rd.choice(budgets)
-    valid_types = [t for t, b in roadmap.items() if b == budget]
-    preferred_type = rd.choice(valid_types)
-    rooms_needed = rd.randint(1, 3)
-    new_client = Client(name, budget, preferred_type, rooms_needed)
-    clients.append(new_client)
-    client_counts[budget] = client_counts.get(budget, 0) + 1
-
-# Summary of clients created
-print("\n[Summary] Client creation complete:")
-for budget, count in client_counts.items():
-    print(f"  {budget.capitalize()}-budget clients: {count}")
-
-print(f"\n[Info] All {len(clients)} clients have been created successfully.")
-
-# --- Booking phase ---
-print("\n[Process] Booking phase started...\n")
-
-booking_logs = []
-
-for client in clients:
-    message = client.book_venue(v, roadmap)
-    if message:
-        booking_logs.append(message)
-
-# Print only the first 10 bookings
-for log in booking_logs[:50]:
-    print(log)
-
-print(f"\n[Info] Showing only 10 of {len(booking_logs)} bookings.\n")
-
-# --- Booking summary ---
-print("\n[Summary] Booking results:")
-
-for i, client in enumerate(clients[:10]):
-    if client.booked_venue:
-        booked = client.booked_venue
-        print(f"  {client.name} booked {booked.__class__.__name__} in {booked.location}.")
-    else:
-        print(f"  {client.name} did not manage to book any venue.")
-
-if len(clients) > 10:
-    print(f"  ... (skipping {len(clients) - 10} more clients)")
-
-booked_total = sum(1 for c in clients if c.booked_venue)
-print(f"\n[Stats] Successful bookings: {booked_total}/{len(clients)} clients.")
-
-# --- Remaining availability ---
-print("\n[Summary] Remaining availability (first 10 venues):")
-for venue in v[:10]:
-    print(f"  {venue.__class__.__name__} in {venue.location}: {venue._number_of_rooms} rooms left")
-
-print("\n[End] Simulation complete.\n")
-
-
-"""

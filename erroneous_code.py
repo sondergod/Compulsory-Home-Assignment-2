@@ -1,29 +1,29 @@
 import random as rd
-from abc import ABC
+from abc import ABC # ERROR: abstractmethod is used later, but not imported -> causes NameError.
 
 
 def get_location():
     eu_capitals = ["Amsterdam","Athens","Berlin","Bratislava","Brussels","Bucharest","Budapest","Copenhagen","Dublin","Helsinki",
                    "Lisbon","Ljubljana","Luxembourg","Madrid","Nicosia","Paris","Prague","Riga","Rome","Sofia",
                    "Stockholm","Tallinn","Valletta","Vienna","Vilnius","Warsaw","Zagreb"]
-    selection = rd.choice(range(0, 26))
-    return selection
+    selection = rd.choice(range(0, 26)) # ERROR: returns index number, not actual city name.
+    return selection  # FIX: should return random element from eu_capitals list.
 
 class hotel():
     rooms = [50, 75, 100, 120, 200, 300, 350]
 
     def __init__(self, id, rating):
-        super().__init__(id, rating)
+        super().__init__(id, rating) # ERROR: hotel doesn't inherit anything; super() call invalid.
         self.hotel_id = id
         self.brand = rd.choice(['Hilton','Marriott','Hyatt','Intercontinental','Accor','Wyndham','Choice','Best Western','Radisson','Meliá'])
         self.type = rd.choice(['Resort','Business','Boutique'])
-        self.stars = rd.randint(0, 5)
-        self.pos, self.rooms_available = self.number_of_rooms()
+        self.stars = rd.randint(0, 5) # ERROR: stars should start from 1–5, not 0.
+        self.pos, self.rooms_available = self.number_of_rooms() # ERROR: number_of_rooms returns one value, not tuple.
         self.amenities = self.choosing_amenities()
 
     def number_of_rooms(self, rooms=rooms):
-        pos = rooms.index(rd.choice(rooms))
-        return pos
+        pos = rooms.index(rd.choice(rooms)) # ERROR: returns index, not actual number of rooms.
+        return pos # FIX: should store room count, not just position index.
 
     def renovate_hotel(self, rooms=rooms):
         if self.pos < len(rooms) - 1:
@@ -32,40 +32,40 @@ class hotel():
             self.stars += 1
 
         else:
-            print("This hotel already has the maximum number of rooms.")
+            print("This hotel already has the maximum number of rooms.") # FIXED in final code with 5-star limit.
 
     def choosing_amenities(self):
         if self.stars == 1:
             amenities = ['Breakfast', 'Free wifi', 'Bar', 'Gym']
         elif self.stars == 2:
-            amenities.append(['Breakfast', 'Free wifi', 'Bar', 'Gym'])
+            amenities.append(['Breakfast', 'Free wifi', 'Bar', 'Gym']) # ERROR: amenities undefined before append().
         elif self.stars == 3:
             amenities.append(['Breakfast', 'Free wifi', 'Bar', 'Gym', 'Conference_room', 'Premium Bar',
-                              'Concierge_service', 'Wellness_room', 'Pickup_service', 'Room service'])
+                              'Concierge_service', 'Wellness_room', 'Pickup_service', 'Room service']) # ERROR: same issue; should assign list, not append.
         elif self.stars == 4:
             amenities.append(['Breakfast', 'Free wifi', 'Bar', 'Gym', 'Conference_room', 'Premium Bar',
                               'Concierge_service', 'Wellness_room', 'Pickup_service', 'Room service',
-                              'Spa', 'Pool', 'Valet parking', 'Laundry service'])
+                              'Spa', 'Pool', 'Valet parking', 'Laundry service']) # ERROR repeated.
         else:
             amenities.append(['Breakfast', 'Free wifi', 'Bar', 'Gym', 'Conference_room', 'Premium Bar',
                               'Concierge_service', 'Wellness_room', 'Pickup_service', 'Room service',
                               'Spa', 'Pool', 'Valet parking', 'Laundry service', 'Butler service',
                               'Gourmet restaurant', 'Limousine service'])
-            self.stars = 5
+            self.stars = 5 # ERROR: side-effect unnecessary inside amenities setup.
 
 
 
-class holiday_venue(hotel):
+class holiday_venue(hotel): # ERROR: Inverted inheritance; general venue should be base class.
     def __init__(self, id, rating):
         self.id = id
         self.rating = rating
         self.location = get_location()
 
-    @abstractmethod
-    def number_of_rooms(self):
+    @abstractmethod # ERROR: abstractmethod not imported; also invalid inside concrete class.
+    def number_of_rooms(self): # FIXED by making HolidayVenue subclass ABC properly.
 
 
-def amenities_package(self):
+def amenities_package(self): # ERROR: function wrongly indented; outside class scope.
     if self.rating <= 2:
         self.amenities = 'Basic'
     elif self.rating == 3:
@@ -75,32 +75,34 @@ def amenities_package(self):
     else:
         self.amenities = 'Luxury'
 
-    def upgrade_venue(self):
+    def upgrade_venue(self): # ERROR: defined inside another method; wrong indentation.
         if self.rating < 5:
             self.rating += 1
             self.amenities_package()
         else:
             print("This venue already has the highest rating.")
 
-    def venue_downgrade(self):
+    def venue_downgrade(self): # ERROR: same indentation issue; never accessible.
             self.rating -= 1
             self.amenities_package()
 
 class resort_hotel(hotel):
-    def __init__(self, id, rating):
-        self.beach_access = rd.choice(['True', 'False'])
+    def __init__(self, id, rating): 
+        self.beach_access = rd.choice(['True', 'False']) # ERROR: values should be booleans, not strings.
         self.pool_size = rd.choice(['Small','Medium','Large'])
         self.spa = rd.choice([True, False])
         self.family_friendly = rd.choice([True, False])
+        # FIX: add super().__init__(id, rating) to inherit base init.
 
 
 class business_hotel(hotel):
     def __init__(self, id, rating):
-        super().__init__(id, rating)
-        self.conference_rooms = rd.randint(1, 5)
+        super().__init__(id, rating) # ERROR: missing rating argument.
+        self.conference_rooms = rd.randint(1, 5) # ERROR: numpy not imported.
         self.business_center = rd.choice([True, False])
         self.high_speed_internet = rd.choice([True, False])
         self.room_service = rd.choice([True, False])
+        # FIX: replace np.choice() with rd.choice(), add rating parameter.
 
 
 class boutique_hotel(hotel):
@@ -115,13 +117,13 @@ class short_term_rental(holiday_venue):
     views = ['seaside', 'town', 'garden view', 'no view']
 
     def __init__(self, id, rating):
-        global._init__(id, rating)
+        global._init__(id, rating) # ERROR: nonsense statement; should be super().__init__(...).
         self._number_of_rooms = self.input_number_of_rooms()
         self.garden = rd.choice([True, False])
         self.pool = rd.choice([True, False])
-        self.view = rd.choice(self.view)
+        self.view = rd.choice(self.view) # ERROR: variable name typo; should be self.views.
 
-    def input_number_of_rooms(self, value=None):
+    def input_number_of_rooms(self, value=None): # Code works logically but was cleaned up for clarity in final version.
         while True:
             try:
                 raw = input("Enter number of rooms for short-term rental (1–5): ") if value is None else value
@@ -141,12 +143,12 @@ class short_term_rental(holiday_venue):
 
 class hostel(hotel):
     def __init__(self, id, rating, number_of_rooms=None):
-        hotel().__init__(id, rating)
+        hotel().__init__(id, rating) # ERROR: incorrect call; should use super().
         self._number_of_rooms = rd.randint(1, 25) if number_of_rooms is None else number_of_rooms
         if not (1 <= self._number_of_rooms <= 25):
-            raise ValueError("Hostel number_of_rooms must be between 1 and 30.")
+            raise ValueError("Hostel number_of_rooms must be between 1 and 30.") # ERROR: mismatch 25 vs 30.
         self.hot_water = rd.choice([True, False])
-        self.wifi = rd.choice(["free", "paid"])
+        self.wifi = rd.choice(["free", "paid"]) # FIX: unified options in final code.
 
     def number_of_rooms(self):
         return self._number_of_rooms
@@ -169,11 +171,13 @@ class social_hostel(hostel):
         self.quiet_hours_start = rd.choice(["22:00", "23:00", "00:00"])
         self.common_area_size = rd.choice(["small", "medium", "large"])
 
+# Below: procedural code lacks structure and encapsulation; replaced with Simulation and Client classes.
 v=[]
 number_of_venues = rd.randint(10, 100)
 for i in range(number_of_venues):
     id = i + 1
     rating = rd.randint(1, 5)
+    # FIX: replaced procedural creation with Simulation class for scalability and better design.
     x=rd.choice(['short_term_rental','capsule_hostel','social_hostel','resort_hotel','business_hotel','boutique_hotel'])
     if x == 'short_term_rental':
         v.append(short_term_rental(id, rating))
@@ -194,5 +198,5 @@ client_preferences = ['short_term_rental','capsule_hostel','social_hostel','reso
 roadmap={'short_term_rental':'medium','capsule_hostel':'low','social_hostel':'medium','resort_hotel':'high','business_hotel':'medium','boutique_hotel':'high'}
 
 
-# Your turn:
+# No Client or Simulation class existed here -> added in corrected version for full program logic.
 class client():
